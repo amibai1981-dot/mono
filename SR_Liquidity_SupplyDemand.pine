@@ -61,16 +61,16 @@ len9 = input.int   (  20           , '' ,                                       
 mlt9 = input.float (   2           , '' ,                                                                                            group=set, inline='9')
 res9 = input.timeframe('W'         , '' ,                                                                                            group=set, inline='9')
 
-pick1   = input.bool(false, 'A', minval=1, group='show values', inline='1')
-choice1 = input.int (    1, '' , minval=1, maxval=9,            group='show values', inline='1')
-pick2   = input.bool(false, 'B', minval=1, group='show values', inline='2')
-choice2 = input.int (    3, '' , minval=1, maxval=9,            group='show values', inline='2')
-pick3   = input.bool(false, 'C', minval=1, group='show values', inline='3')
-choice3 = input.int (    5, '' , minval=1, maxval=9,            group='show values', inline='3')
-pick4   = input.bool(false, 'D', minval=1, group='show values', inline='4')
-choice4 = input.int (    7, '' , minval=1, maxval=9,            group='show values', inline='4')
-pick5   = input.bool(false, 'E', minval=1, group='show values', inline='5')
-choice5 = input.int (    9, '' , minval=1, maxval=9,            group='show values', inline='5')
+pick1   = input.bool(false, 'A',            group='show values', inline='1')
+choice1 = input.int (    1, '' , minval=1, maxval=9, group='show values', inline='1')
+pick2   = input.bool(false, 'B',            group='show values', inline='2')
+choice2 = input.int (    3, '' , minval=1, maxval=9, group='show values', inline='2')
+pick3   = input.bool(false, 'C',            group='show values', inline='3')
+choice3 = input.int (    5, '' , minval=1, maxval=9, group='show values', inline='3')
+pick4   = input.bool(false, 'D',            group='show values', inline='4')
+choice4 = input.int (    7, '' , minval=1, maxval=9, group='show values', inline='4')
+pick5   = input.bool(false, 'E',            group='show values', inline='5')
+choice5 = input.int (    9, '' , minval=1, maxval=9, group='show values', inline='5')
 
 //─────────────────────────────────────────────────────────────────────────────
 // SUPPLY & DEMAND SETTINGS
