@@ -2,7 +2,7 @@
 // Licenses: CC BY-NC-SA 4.0 | GPL-3.0 | CC BY-NC-SA 4.0
 
 //@version=6
-indicator("Adaptive S/R Zones + Trend Finder + SR Classification", shorttitle="SR+ATF+SRC", overlay=true, max_lines_count=500, max_labels_count=200, max_boxes_count=200)
+indicator("Adaptive S/R Zones + Trend Finder + SR Classification", shorttitle="SR+ATF+SRC", overlay=true, max_lines_count=500, max_labels_count=200, max_boxes_count=200, max_bars_back=1200)
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ① ADAPTIVE S/R ZONES [BigBeluga]
@@ -459,6 +459,7 @@ string t3 = 'Pearson\'s R is a statistical measure that evaluates the linear rel
 string t4 = 'Displays the annualized return (CAGR) of the trend over the auto-selected period. This feature is available only for daily (D) and weekly (W) timeframes, providing insight into the expected yearly growth rate if the trend continues.'
 
 sourceInput = input.source(close, title = 'Source')
+max_bars_back(sourceInput, 1200)
 
 string group0 = 'CHANNEL SETTINGS'
 bool periodMode = input.bool(false, 'Use Long-Term Channel', group = group0, tooltip = t1)
