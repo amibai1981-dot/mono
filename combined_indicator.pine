@@ -848,7 +848,7 @@ if time > chart.left_visible_bar_time
     if low  < lowest
         lowest  := low
     if time <= chart.right_visible_bar_time
-        if ph
+        if not na(ph)
             if ph > mxPiv
                 mxPiv := ph
             for i      = pivH.size() -1 to 0
@@ -856,7 +856,7 @@ if time > chart.left_visible_bar_time
                 if ph >= get.p
                     pivH.remove(i)
             pivH.unshift(piv.new(n -right, ph))
-        if pl
+        if not na(pl)
             if pl < mnPiv
                 mnPiv := pl
             for i      = pivL.size() -1 to 0
