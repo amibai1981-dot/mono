@@ -1263,15 +1263,20 @@ sellCondition = (nearResist   and bearCandle and bearTrend and sig_rsi > sig_rsi
 buySignal  = showSignals and buyCondition
 sellSignal = showSignals and sellCondition
 
-// ── Plots ─────────────────────────────────────────────────────────────────────
-plotshape(buySignal,  title="Buy Signal",  location=location.belowbar,
-     style=shape.triangleup,   size=size.normal, color=sig_buyColor,  text="BUY",  textcolor=sig_buyColor)
-plotshape(sellSignal, title="Sell Signal", location=location.abovebar,
-     style=shape.triangledown, size=size.normal, color=sig_sellColor, text="SELL", textcolor=sig_sellColor)
+// ── Signal labels (labels don't count toward the plot() limit) ────────────────
+if buySignal
+    label.new(bar_index, low, "▲ BUY",
+         style     = label.style_label_up,
+         color     = sig_buyColor,
+         textcolor = color.white,
+         size      = size.normal)
 
-// EMA plots for visual context
-plot(sig_emaF, title="EMA Fast", color=color.new(sig_buyColor,  60), linewidth=1)
-plot(sig_emaS, title="EMA Slow", color=color.new(sig_sellColor, 60), linewidth=1)
+if sellSignal
+    label.new(bar_index, high, "▼ SELL",
+         style     = label.style_label_down,
+         color     = sig_sellColor,
+         textcolor = color.white,
+         size      = size.normal)
 
 // ── Alerts ────────────────────────────────────────────────────────────────────
 alertcondition(buySignal,  title="BUY Signal",  message="BUY Signal fired — price near support with bullish EMA + candle confirmation.")
