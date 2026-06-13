@@ -242,18 +242,20 @@ if showSD
 
 // ── Mitigation check ──
 if showSD and hideMit
-    for i = 0 to supplyZones.size() - 1
-        z = supplyZones.get(i)
-        if not z.mitigated and close > z.top
-            z.mitigated := true
-            z.zb.set_bgcolor(color.new(#FF1744, 95))
-            z.zb.set_border_color(color.new(#FF1744, 80))
-    for i = 0 to demandZones.size() - 1
-        z = demandZones.get(i)
-        if not z.mitigated and close < z.btm
-            z.mitigated := true
-            z.zb.set_bgcolor(color.new(#00E676, 95))
-            z.zb.set_border_color(color.new(#00E676, 80))
+    if supplyZones.size() > 0
+        for i = 0 to supplyZones.size() - 1
+            z = supplyZones.get(i)
+            if not z.mitigated and close > z.top
+                z.mitigated := true
+                z.zb.set_bgcolor(color.new(#FF1744, 95))
+                z.zb.set_border_color(color.new(#FF1744, 80))
+    if demandZones.size() > 0
+        for i = 0 to demandZones.size() - 1
+            z = demandZones.get(i)
+            if not z.mitigated and close < z.btm
+                z.mitigated := true
+                z.zb.set_bgcolor(color.new(#00E676, 95))
+                z.zb.set_border_color(color.new(#00E676, 80))
 
 //─────────────────────────────────────────────────────────────────────────────
 // LIQUIDITY LEVEL DETECTION
