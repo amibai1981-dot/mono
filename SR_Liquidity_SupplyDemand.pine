@@ -61,43 +61,43 @@ len9 = input.int   (  20           , '' ,                                       
 mlt9 = input.float (   2           , '' ,                                                                                            group=set, inline='9')
 res9 = input.timeframe('W'         , '' ,                                                                                            group=set, inline='9')
 
-pick1   = input.bool(false, 'A',            group='show values', inline='1')
-choice1 = input.int (    1, '' , minval=1, maxval=9, group='show values', inline='1')
-pick2   = input.bool(false, 'B',            group='show values', inline='2')
-choice2 = input.int (    3, '' , minval=1, maxval=9, group='show values', inline='2')
-pick3   = input.bool(false, 'C',            group='show values', inline='3')
-choice3 = input.int (    5, '' , minval=1, maxval=9, group='show values', inline='3')
-pick4   = input.bool(false, 'D',            group='show values', inline='4')
-choice4 = input.int (    7, '' , minval=1, maxval=9, group='show values', inline='4')
-pick5   = input.bool(false, 'E',            group='show values', inline='5')
-choice5 = input.int (    9, '' , minval=1, maxval=9, group='show values', inline='5')
+pick1   = input.bool(false, 'A', group='show values', inline='1')
+choice1 = input.int (    1, '' , minval=1, maxval=9,  group='show values', inline='1')
+pick2   = input.bool(false, 'B', group='show values', inline='2')
+choice2 = input.int (    3, '' , minval=1, maxval=9,  group='show values', inline='2')
+pick3   = input.bool(false, 'C', group='show values', inline='3')
+choice3 = input.int (    5, '' , minval=1, maxval=9,  group='show values', inline='3')
+pick4   = input.bool(false, 'D', group='show values', inline='4')
+choice4 = input.int (    7, '' , minval=1, maxval=9,  group='show values', inline='4')
+pick5   = input.bool(false, 'E', group='show values', inline='5')
+choice5 = input.int (    9, '' , minval=1, maxval=9,  group='show values', inline='5')
 
 //─────────────────────────────────────────────────────────────────────────────
 // SUPPLY & DEMAND SETTINGS
 //─────────────────────────────────────────────────────────────────────────────
 grpSD     = '══════ Supply & Demand Zones ══════'
-showSD    = input.bool  (true ,                    'Show Zones'           , group=grpSD)
-sdBars    = input.int   (   5 , 'Base Bars'       , minval=2  , maxval=20 , group=grpSD)
-sdImpulse = input.float (  1.5, 'Min Impulse(ATR)', minval=0.5, maxval=5  , group=grpSD)
-maxSD     = input.int   (   5 , 'Max Zones'       , minval=1  , maxval=15 , group=grpSD)
-hideMit   = input.bool  (true , 'Fade Mitigated'  ,                         group=grpSD)
-demandCol = input.color (color.new(#00E676, 85), 'Demand Color'           , group=grpSD)
-supplyCol = input.color (color.new(#FF1744, 85), 'Supply Color'           , group=grpSD)
-sdBorderD = input.color (color.new(#00E676, 40), 'Demand Border'          , group=grpSD)
-sdBorderS = input.color (color.new(#FF1744, 40), 'Supply Border'          , group=grpSD)
+showSD    = input.bool  (true ,                    'Show Zones'            , group=grpSD)
+sdBars    = input.int   (   5 , 'Base Bars'        , minval=2  , maxval=20 , group=grpSD)
+sdImpulse = input.float (  1.5, 'Min Impulse (ATR)', minval=0.5, maxval=5  , group=grpSD)
+maxSD     = input.int   (   5 , 'Max Zones'        , minval=1  , maxval=15 , group=grpSD)
+hideMit   = input.bool  (true , 'Fade Mitigated'   ,                         group=grpSD)
+demandCol = input.color (color.new(#00E676, 85), 'Demand Color'            , group=grpSD)
+supplyCol = input.color (color.new(#FF1744, 85), 'Supply Color'            , group=grpSD)
+sdBorderD = input.color (color.new(#00E676, 40), 'Demand Border'           , group=grpSD)
+sdBorderS = input.color (color.new(#FF1744, 40), 'Supply Border'           , group=grpSD)
 
 //─────────────────────────────────────────────────────────────────────────────
 // LIQUIDITY SETTINGS
 //─────────────────────────────────────────────────────────────────────────────
 grpLiq    = '══════ Liquidity ══════'
-showLiq   = input.bool  (true ,                    'Show Liquidity Levels' , group=grpLiq)
-liqLen    = input.int   (  10 , 'Swing Lookback'  , minval=3  , maxval=50  , group=grpLiq)
-eqThresh  = input.float (0.075, 'EQ Threshold %'  , minval=0.01, maxval=2  , group=grpLiq)
-showSweep = input.bool  (true , 'Show Sweeps'     ,                          group=grpLiq)
-bsLiqCol  = input.color (color.new(#00BCD4, 0), 'Buyside Liq (BSL)'       , group=grpLiq)
-ssLiqCol  = input.color (color.new(#FF9800, 0), 'Sellside Liq (SSL)'      , group=grpLiq)
-sweepBull = input.color (color.new(#2196F3, 0), 'Bullish Sweep Label'      , group=grpLiq)
-sweepBear = input.color (color.new(#F44336, 0), 'Bearish Sweep Label'      , group=grpLiq)
+showLiq   = input.bool  (true ,                    'Show Liquidity Levels'  , group=grpLiq)
+liqLen    = input.int   (  10 , 'Swing Lookback'   , minval=3  , maxval=50  , group=grpLiq)
+eqThresh  = input.float (0.075, 'EQ Threshold %'   , minval=0.01, maxval=2  , group=grpLiq)
+showSweep = input.bool  (true , 'Show Sweeps'      ,                          group=grpLiq)
+bsLiqCol  = input.color (color.new(#00BCD4, 0), 'Buyside Liq (BSL)'        , group=grpLiq)
+ssLiqCol  = input.color (color.new(#FF9800, 0), 'Sellside Liq (SSL)'       , group=grpLiq)
+sweepBull = input.color (color.new(#2196F3, 0), 'Bullish Sweep'             , group=grpLiq)
+sweepBear = input.color (color.new(#F44336, 0), 'Bearish Sweep'             , group=grpLiq)
 
 //─────────────────────────────────────────────────────────────────────────────
 // USER DEFINED TYPES
@@ -134,11 +134,8 @@ var int      sBix    = na
 var float    mxPiv   = na
 var float    mnPiv   = na
 
-// Supply & Demand zone arrays
 var sdZone[] demandZones = array.new<sdZone>()
 var sdZone[] supplyZones = array.new<sdZone>()
-
-// Liquidity tracking arrays
 var float[]  liqHigh     = array.new<float>()
 var int[]    liqHighBar  = array.new<int>()
 var float[]  liqLow      = array.new<float>()
@@ -187,70 +184,66 @@ if time > chart.left_visible_bar_time
 // SUPPLY & DEMAND ZONE DETECTION
 //─────────────────────────────────────────────────────────────────────────────
 atr14 = ta.atr(14)
-
 phSD  = ta.pivothigh(sdBars, sdBars)
 plSD  = ta.pivotlow (sdBars, sdBars)
 
 if showSD
-    // ── Supply Zone ── at pivot high
-    if phSD
+    if not na(phSD)
         zoneTop = phSD
         zoneBtm = phSD
         for i = 1 to sdBars
             zoneBtm := math.min(zoneBtm, math.min(open[sdBars + i], close[sdBars + i]))
-        impulseDown = phSD - low[sdBars]
-        if impulseDown > atr14[sdBars] * sdImpulse
+        if (phSD - low[sdBars]) > atr14[sdBars] * sdImpulse
             b = box.new(n - sdBars * 2, zoneTop, n + 8, zoneBtm,
               bgcolor      = supplyCol,
               border_color = sdBorderS,
               border_width = 1,
               extend       = extend.right)
             label.new(n - sdBars * 2 + 1, zoneTop,
-              text      = '▼ Supply',
+              text      = 'Supply',
               style     = label.style_label_right,
               size      = size.tiny,
               color     = color(na),
-              textcolor = #FF1744)
+              textcolor = color.new(#FF1744, 0))
             supplyZones.unshift(sdZone.new(b, zoneTop, zoneBtm, false))
             if supplyZones.size() > maxSD
                 old = supplyZones.pop()
                 old.zb.delete()
 
-    // ── Demand Zone ── at pivot low
-    if plSD
+    if not na(plSD)
         zoneTop = plSD
         zoneBtm = plSD
         for i = 1 to sdBars
             zoneTop := math.max(zoneTop, math.max(open[sdBars + i], close[sdBars + i]))
-        impulseUp = high[sdBars] - plSD
-        if impulseUp > atr14[sdBars] * sdImpulse
+        if (high[sdBars] - plSD) > atr14[sdBars] * sdImpulse
             b = box.new(n - sdBars * 2, zoneTop, n + 8, zoneBtm,
               bgcolor      = demandCol,
               border_color = sdBorderD,
               border_width = 1,
               extend       = extend.right)
             label.new(n - sdBars * 2 + 1, zoneBtm,
-              text      = '▲ Demand',
+              text      = 'Demand',
               style     = label.style_label_right,
               size      = size.tiny,
               color     = color(na),
-              textcolor = #00E676)
+              textcolor = color.new(#00E676, 0))
             demandZones.unshift(sdZone.new(b, zoneTop, zoneBtm, false))
             if demandZones.size() > maxSD
                 old = demandZones.pop()
                 old.zb.delete()
 
-// ── Mitigation check ──
 if showSD and hideMit
-    if supplyZones.size() > 0
-        for i = 0 to supplyZones.size() - 1
+    szSup = supplyZones.size()
+    if szSup > 0
+        for i = 0 to szSup - 1
             z = supplyZones.get(i)
             if not z.mitigated and close > z.top
                 z.mitigated := true
                 z.zb.set_bgcolor(color.new(#FF1744, 95))
                 z.zb.set_border_color(color.new(#FF1744, 80))
-    if demandZones.size() > 0
-        for i = 0 to demandZones.size() - 1
+    szDem = demandZones.size()
+    if szDem > 0
+        for i = 0 to szDem - 1
             z = demandZones.get(i)
             if not z.mitigated and close < z.btm
                 z.mitigated := true
@@ -258,105 +251,108 @@ if showSD and hideMit
                 z.zb.set_border_color(color.new(#00E676, 80))
 
 //─────────────────────────────────────────────────────────────────────────────
-// LIQUIDITY LEVEL DETECTION
+// LIQUIDITY DETECTION
 //─────────────────────────────────────────────────────────────────────────────
 phLiq = ta.pivothigh(liqLen, liqLen)
 plLiq = ta.pivotlow (liqLen, liqLen)
 
 if showLiq
-    if phLiq
+    if not na(phLiq)
         liqHigh.unshift(phLiq)
         liqHighBar.unshift(n - liqLen)
         if liqHigh.size() > 30
             liqHigh.pop()
             liqHighBar.pop()
-
-    if plLiq
+    if not na(plLiq)
         liqLow.unshift(plLiq)
         liqLowBar.unshift(n - liqLen)
         if liqLow.size() > 30
             liqLow.pop()
             liqLowBar.pop()
 
-// ── Draw liquidity lines at the last visible bar ──
 if showLiq and barstate.islast
-    drawnH = array.new<float>()
-    for i = 0 to liqHigh.size() - 2
-        h1 = liqHigh.get(i)
-        b1 = liqHighBar.get(i)
-        matched = false
-        for j = i + 1 to liqHigh.size() - 1
-            if matched
-                break
-            h2 = liqHigh.get(j)
-            b2 = liqHighBar.get(j)
-            pct = math.abs(h1 - h2) / math.max(h1, h2) * 100
-            if pct <= eqThresh
-                alreadyDrawn = false
-                for k = 0 to drawnH.size() - 1
-                    if math.abs(drawnH.get(k) - h1) / math.max(drawnH.get(k), h1) * 100 <= eqThresh
-                        alreadyDrawn := true
-                if not alreadyDrawn
-                    midH = (h1 + h2) / 2
-                    line.new(b2, midH, n + 10, midH,
-                      color = bsLiqCol, style = line.style_dashed, width = 1)
-                    label.new(n + 10, midH, '⚡ BSL',
-                      style     = label.style_label_left,
-                      size      = size.tiny,
-                      color     = color(na),
-                      textcolor = bsLiqCol)
-                    drawnH.push(h1)
-                matched := true
+    szH = liqHigh.size()
+    if szH >= 2
+        drawnH = array.new<float>()
+        for i = 0 to szH - 2
+            h1      = liqHigh.get(i)
+            b1      = liqHighBar.get(i)
+            matched = false
+            for j = i + 1 to szH - 1
+                if matched
+                    break
+                h2  = liqHigh.get(j)
+                b2  = liqHighBar.get(j)
+                pct = math.abs(h1 - h2) / math.max(h1, h2) * 100
+                if pct <= eqThresh
+                    szDH        = drawnH.size()
+                    alreadyDrawn = false
+                    if szDH > 0
+                        for k = 0 to szDH - 1
+                            if math.abs(drawnH.get(k) - h1) / math.max(drawnH.get(k), h1) * 100 <= eqThresh
+                                alreadyDrawn := true
+                    if not alreadyDrawn
+                        midH = (h1 + h2) / 2
+                        line.new(b2, midH, n + 10, midH,
+                          color = bsLiqCol, style = line.style_dashed, width = 1)
+                        label.new(n + 10, midH, 'BSL',
+                          style     = label.style_label_left,
+                          size      = size.tiny,
+                          color     = color(na),
+                          textcolor = bsLiqCol)
+                        drawnH.push(h1)
+                    matched := true
 
-    drawnL = array.new<float>()
-    for i = 0 to liqLow.size() - 2
-        l1 = liqLow.get(i)
-        b1 = liqLowBar.get(i)
-        matched = false
-        for j = i + 1 to liqLow.size() - 1
-            if matched
-                break
-            l2 = liqLow.get(j)
-            b2 = liqLowBar.get(j)
-            pct = math.abs(l1 - l2) / math.max(l1, l2) * 100
-            if pct <= eqThresh
-                alreadyDrawn = false
-                for k = 0 to drawnL.size() - 1
-                    if math.abs(drawnL.get(k) - l1) / math.max(drawnL.get(k), l1) * 100 <= eqThresh
-                        alreadyDrawn := true
-                if not alreadyDrawn
-                    midL = (l1 + l2) / 2
-                    line.new(b2, midL, n + 10, midL,
-                      color = ssLiqCol, style = line.style_dashed, width = 1)
-                    label.new(n + 10, midL, '⚡ SSL',
-                      style     = label.style_label_left,
-                      size      = size.tiny,
-                      color     = color(na),
-                      textcolor = ssLiqCol)
-                    drawnL.push(l1)
-                matched := true
+    szL = liqLow.size()
+    if szL >= 2
+        drawnL = array.new<float>()
+        for i = 0 to szL - 2
+            l1      = liqLow.get(i)
+            b1      = liqLowBar.get(i)
+            matched = false
+            for j = i + 1 to szL - 1
+                if matched
+                    break
+                l2  = liqLow.get(j)
+                b2  = liqLowBar.get(j)
+                pct = math.abs(l1 - l2) / math.max(l1, l2) * 100
+                if pct <= eqThresh
+                    szDL         = drawnL.size()
+                    alreadyDrawn = false
+                    if szDL > 0
+                        for k = 0 to szDL - 1
+                            if math.abs(drawnL.get(k) - l1) / math.max(drawnL.get(k), l1) * 100 <= eqThresh
+                                alreadyDrawn := true
+                    if not alreadyDrawn
+                        midL = (l1 + l2) / 2
+                        line.new(b2, midL, n + 10, midL,
+                          color = ssLiqCol, style = line.style_dashed, width = 1)
+                        label.new(n + 10, midL, 'SSL',
+                          style     = label.style_label_left,
+                          size      = size.tiny,
+                          color     = color(na),
+                          textcolor = ssLiqCol)
+                        drawnL.push(l1)
+                    matched := true
 
 //─────────────────────────────────────────────────────────────────────────────
 // LIQUIDITY SWEEP DETECTION
 //─────────────────────────────────────────────────────────────────────────────
-if showLiq and showSweep
-    // Bullish sweep: wick below recent swing low but close above it
-    recentLow = ta.lowest(low , liqLen * 2)
-    swingLow  = ta.lowest(low[1], liqLen * 2)
-    if low < swingLow and close > swingLow and close[1] <= swingLow
+if showLiq and showSweep and bar_index >= liqLen
+    swingLow  = ta.lowest (low [1], liqLen)
+    swingHigh = ta.highest(high[1], liqLen)
+
+    if low < swingLow and close > swingLow
         label.new(n, low,
-          text      = '🔄 Bullish Sweep',
+          text      = 'Bullish Sweep',
           style     = label.style_label_up,
           size      = size.small,
           color     = color.new(sweepBull, 80),
           textcolor = sweepBull)
 
-    // Bearish sweep: wick above recent swing high but close below it
-    recentHigh = ta.highest(high , liqLen * 2)
-    swingHigh  = ta.highest(high[1], liqLen * 2)
-    if high > swingHigh and close < swingHigh and close[1] >= swingHigh
+    if high > swingHigh and close < swingHigh
         label.new(n, high,
-          text      = '🔄 Bearish Sweep',
+          text      = 'Bearish Sweep',
           style     = label.style_label_down,
           size      = size.small,
           color     = color.new(sweepBear, 80),
