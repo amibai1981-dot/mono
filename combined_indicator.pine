@@ -1214,3 +1214,65 @@ plot(plotE8 , 'E', style= f(choice5) ? plot.style_line : plot.style_circles, col
 plot(plotE9 , 'E', style= f(choice5) ? plot.style_line : plot.style_circles, color=color.white , editable=false, display=display.pane)
 plot(plotE10, 'E', style= f(choice5) ? plot.style_line : plot.style_circles, color=color.white , editable=false, display=display.pane)
 plot(plotE11, 'E', style= f(choice5) ? plot.style_line : plot.style_circles, color=color.white , editable=false, display=display.pane)
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ④ BUY / SELL SIGNALS (Combined)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+var grpSig     = "Buy/Sell Signals"
+showSignals    = input.bool(true,   "Show Buy/Sell Signals",         group=grpSig)
+sig_rsiLen     = input.int(14,      "RSI Length",    minval=2, maxval=50,  group=grpSig)
+sig_rsiOB      = input.float(70.0,  "RSI Overbought", minval=50, maxval=95, step=1, group=grpSig)
+sig_rsiOS      = input.float(30.0,  "RSI Oversold",   minval=5,  maxval=50, step=1, group=grpSig)
+sig_emaFastLen = input.int(9,       "EMA Fast",      minval=1, maxval=100, group=grpSig)
+sig_emaSlowLen = input.int(21,      "EMA Slow",      minval=2, maxval=500, group=grpSig)
+sig_proxPct    = input.float(0.5,   "S/R Proximity %", minval=0.05, maxval=5.0, step=0.05, group=grpSig,
+     tooltip="How close price must be to the nearest S/R level (as % of price) to consider it 'near' for signal generation.")
+sig_buyColor   = input.color(color.new(#00e676, 0), "Buy Color",  group=grpSig)
+sig_sellColor  = input.color(color.new(#ff1744, 0), "Sell Color", group=grpSig)
+
+// ── Indicators used for confirmation ─────────────────────────────────────────
+sig_rsi  = ta.rsi(close, sig_rsiLen)
+sig_emaF = ta.ema(close, sig_emaFastLen)
+sig_emaS = ta.ema(close, sig_emaSlowLen)
+
+// ── Proximity to S/R levels from indicator ① ──────────────────────────────────
+sig_prox     = close * sig_proxPct / 100.0
+nearSupport  = not na(nearestSup) and math.abs(close - nearestSup) <= sig_prox
+nearResist   = not na(nearestRes) and math.abs(close - nearestRes) <= sig_prox
+
+// ── Trend & momentum filters ──────────────────────────────────────────────────
+bullTrend    = sig_emaF > sig_emaS
+bearTrend    = sig_emaF < sig_emaS
+bullCandle   = close > open
+bearCandle   = close < open
+
+// ── S/R breakout events from indicator ① (fires on the break bar) ─────────────
+resistBroken = lastBreakDir == "Bullish" and lastBreakBar == bar_index
+supportBroken = lastBreakDir == "Bearish" and lastBreakBar == bar_index
+
+// ── Signal conditions ─────────────────────────────────────────────────────────
+// BUY: price bounces off support  OR  resistance level just broken upward
+buyCondition  = (nearSupport  and bullCandle and bullTrend and sig_rsi < sig_rsiOB) or
+                 (resistBroken and bullTrend)
+
+// SELL: price rejected at resistance  OR  support level just broken downward
+sellCondition = (nearResist   and bearCandle and bearTrend and sig_rsi > sig_rsiOS) or
+                 (supportBroken and bearTrend)
+
+buySignal  = showSignals and buyCondition
+sellSignal = showSignals and sellCondition
+
+// ── Plots ─────────────────────────────────────────────────────────────────────
+plotshape(buySignal,  title="Buy Signal",  location=location.belowbar,
+     style=shape.triangleup,   size=size.normal, color=sig_buyColor,  text="BUY",  textcolor=sig_buyColor)
+plotshape(sellSignal, title="Sell Signal", location=location.abovebar,
+     style=shape.triangledown, size=size.normal, color=sig_sellColor, text="SELL", textcolor=sig_sellColor)
+
+// EMA plots for visual context
+plot(sig_emaF, title="EMA Fast", color=color.new(sig_buyColor,  60), linewidth=1)
+plot(sig_emaS, title="EMA Slow", color=color.new(sig_sellColor, 60), linewidth=1)
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+alertcondition(buySignal,  title="BUY Signal",  message="BUY Signal fired — price near support with bullish EMA + candle confirmation.")
+alertcondition(sellSignal, title="SELL Signal", message="SELL Signal fired — price near resistance with bearish EMA + candle confirmation.")
