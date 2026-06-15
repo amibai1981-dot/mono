@@ -74,9 +74,12 @@ dashPos   = input.string("Bottom Right", "Dashboard Position",
 // ║              ADAPTIVE LOG-REGRESSION TREND CHANNEL              ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-var array<int> Periods = longTerm
-    ? array.from(na,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200)
-    : array.from(na, 20, 30, 40, 50, 60, 70, 80, 90,100,110,120,130,140,150, 160, 170, 180, 190, 200)
+var array<int> Periods = array.new<int>()
+if array.size(Periods) == 0
+    if longTerm
+        Periods := array.from(na,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200)
+    else
+        Periods := array.from(na,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200)
 
 // Computes unbiased std-dev, Pearson's R, slope, and intercept for a log-linear regression
 calcDev(float src, int len) =>
