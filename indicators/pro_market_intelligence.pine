@@ -1,0 +1,497 @@
+// Pro Market Intelligence [PMI]
+// Combines: Adaptive Log-Regression Trend Channel + ATR-Adaptive S/R Zones
+//           + Breakout Detection + Multi-TF MACD Bias + Professional Dashboard
+//
+// Sources integrated:
+//   • Adaptive Trend Finder (log) — Julien Eche (GPL-3.0)
+//   • Adaptive S/R Zones          — BigBeluga    (CC BY-NC-SA 4.0)
+//   • CM MACD Ultimate MTF        — ChrisMoody   (public)
+//   • S/R Classification (VR)     — LuxAlgo      (CC BY-NC-SA 4.0)
+
+//@version=5
+indicator("Pro Market Intelligence [PMI]",
+     shorttitle       = "PMI",
+     overlay          = true,
+     max_lines_count  = 500,
+     max_labels_count = 300,
+     max_boxes_count  = 200,
+     max_bars_back    = 1200)
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                          INPUTS                                 ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+var GTC = "① Adaptive Trend Channel"
+longTerm  = input.bool  (false, "Long-Term Mode (300–1200 bars)",           group=GTC,
+             tooltip="Short: 20–200 | Long: 300–1200. Scroll back if channel not visible in long-term mode.")
+devMult   = input.float (2.0,   "Deviation Multiplier",  step=0.1,          group=GTC)
+chanCol   = input.color (color.gray, "Channel Color",                        group=GTC)
+midCol    = input.color (color.new(#5b9bd5,0), "Midline Color",              group=GTC)
+fillAlpha = input.int   (93,    "Fill Transparency",  minval=0, maxval=100,  group=GTC)
+lineAlpha = input.int   (40,    "Line Transparency",  minval=0, maxval=100,  group=GTC)
+showCAGR  = input.bool  (true,  "Show Annualized Return (Daily/Weekly only)",group=GTC)
+
+var GSR = "② Adaptive S/R Zones"
+pivLen    = input.int   (5,    "Pivot Length",           minval=2, maxval=50,   group=GSR)
+minStr    = input.float (0.1,  "Min ATR Strength",       step=0.05, minval=0,   group=GSR,
+             tooltip="Minimum distance between pivot and neighbors (in ATR units).")
+maxAge    = input.int   (300,  "Max Level Age (bars)",   minval=20, maxval=2000, group=GSR)
+showSup   = input.bool  (true, "Show Support Levels",                           group=GSR)
+showRes   = input.bool  (true, "Show Resistance Levels",                        group=GSR)
+maxLvl    = input.int   (5,    "Max Active Levels Each", minval=1, maxval=20,   group=GSR)
+mergeATR  = input.float (0.5,  "Merge Threshold (ATR×)", step=0.05, minval=0,  group=GSR)
+showZones = input.bool  (true, "Show Zone Fill",                                group=GSR)
+zoneW     = input.float (0.25, "Zone Width (ATR×)",      step=0.05, minval=0.05,group=GSR)
+dynW      = input.bool  (true, "Longevity Line Width",                          group=GSR,
+             tooltip="Older levels grow thicker over time.")
+maxLW     = input.int   (7,    "Max Longevity Width",    minval=1, maxval=10,   group=GSR)
+baseLW    = input.int   (2,    "Base Line Width",        minval=1, maxval=5,    group=GSR)
+
+var GBK = "③ Breakout Detection"
+showBrk   = input.bool  (true, "Show Broken Levels",                           group=GBK)
+brkSens   = input.float (0.1,  "Break Sensitivity (ATR×)", step=0.05, minval=0,group=GBK)
+showBrkL  = input.bool  (true, "Show Break Labels",                             group=GBK)
+maxBrk    = input.int   (4,    "Max Broken Levels Shown", minval=0, maxval=20, group=GBK)
+showPL    = input.bool  (true, "Show Price Labels on Active Levels",            group=GBK)
+
+var GMCD = "④ MACD Bias"
+macdTF    = input.timeframe("", "Timeframe (blank = chart)",                    group=GMCD)
+fastLen   = input.int   (12, "Fast EMA",   minval=1,                           group=GMCD)
+slowLen   = input.int   (26, "Slow EMA",   minval=1,                           group=GMCD)
+sigLen    = input.int   (9,  "Signal SMA", minval=1,                           group=GMCD)
+showBG    = input.bool  (true, "Show MACD Background Tint",                    group=GMCD,
+             tooltip="Subtle background color: teal = bullish MACD, orange = bearish.")
+
+var GVIS = "⑤ Colors & Dashboard"
+supCol    = input.color (color.new(#22bac5, 0), "Support Color",               group=GVIS)
+resCol    = input.color (color.new(#ff6f43, 0), "Resistance Color",            group=GVIS)
+broCol    = input.color (color.new(#94a3b8, 0), "Broken Level Color",          group=GVIS)
+showDash  = input.bool  (true, "Show Dashboard",                               group=GVIS)
+dashPos   = input.string("Bottom Right", "Dashboard Position",
+             options=["Top Right","Bottom Right","Top Left","Bottom Left"],     group=GVIS)
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║              ADAPTIVE LOG-REGRESSION TREND CHANNEL              ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+var array<int> Periods = longTerm
+    ? array.from(na,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200)
+    : array.from(na, 20, 30, 40, 50, 60, 70, 80, 90,100,110,120,130,140,150, 160, 170, 180, 190, 200)
+
+// Computes unbiased std-dev, Pearson's R, slope, and intercept for a log-linear regression
+calcDev(float src, int len) =>
+    if barstate.islast
+        int   p1  = len - 1
+        float sX  = 0.0, float sXX = 0.0, float sYX = 0.0, float sY = 0.0
+        for i = 1 to len
+            float ls = math.log(src[i - 1])
+            sX  += i;  sXX += i * i;  sYX += i * ls;  sY += ls
+        float slope  = nz((len * sYX - sX * sY) / (len * sXX - sX * sX))
+        float avg    = sY / len
+        float intcp  = avg - slope * sX / len + slope
+        float sDev   = 0.0, float sDxx = 0.0, float sDyy = 0.0, float sDyx = 0.0
+        float regres = intcp + slope * p1 * 0.5
+        float sSlp   = intcp
+        for i = 0 to p1
+            float ls  = math.log(src[i])
+            float dxt = ls - avg
+            float dyt = sSlp - regres
+            ls       -= sSlp
+            sSlp     += slope
+            sDxx     += dxt * dxt;  sDyy += dyt * dyt;  sDyx += dxt * dyt;  sDev += ls * ls
+        float uStd = math.sqrt(sDev / p1)
+        float pR   = nz(sDyx / math.sqrt(sDxx * sDyy))
+        [uStd, pR, slope, intcp]
+    else
+        [float(na), float(na), float(na), float(na)]
+
+[d01,r01,s01,n01] = calcDev(close, Periods.get(1))
+[d02,r02,s02,n02] = calcDev(close, Periods.get(2))
+[d03,r03,s03,n03] = calcDev(close, Periods.get(3))
+[d04,r04,s04,n04] = calcDev(close, Periods.get(4))
+[d05,r05,s05,n05] = calcDev(close, Periods.get(5))
+[d06,r06,s06,n06] = calcDev(close, Periods.get(6))
+[d07,r07,s07,n07] = calcDev(close, Periods.get(7))
+[d08,r08,s08,n08] = calcDev(close, Periods.get(8))
+[d09,r09,s09,n09] = calcDev(close, Periods.get(9))
+[d10,r10,s10,n10] = calcDev(close, Periods.get(10))
+[d11,r11,s11,n11] = calcDev(close, Periods.get(11))
+[d12,r12,s12,n12] = calcDev(close, Periods.get(12))
+[d13,r13,s13,n13] = calcDev(close, Periods.get(13))
+[d14,r14,s14,n14] = calcDev(close, Periods.get(14))
+[d15,r15,s15,n15] = calcDev(close, Periods.get(15))
+[d16,r16,s16,n16] = calcDev(close, Periods.get(16))
+[d17,r17,s17,n17] = calcDev(close, Periods.get(17))
+[d18,r18,s18,n18] = calcDev(close, Periods.get(18))
+[d19,r19,s19,n19] = calcDev(close, Periods.get(19))
+
+rLabel(float r) =>
+    r < 0.5  ? "Weak"        :
+    r < 0.7  ? "Moderate"    :
+    r < 0.85 ? "Strong"      :
+    r < 0.95 ? "Very Strong" : "Ultra Strong"
+
+// Persistent state for dashboard
+var float  dashBestR  = na
+var string dashTrend  = "—"
+var int    dashPeriod = na
+
+// Channel drawing objects (persistent to avoid recreation on every tick)
+var line   chanMid    = na
+var line   chanUpper  = na
+var line   chanLower  = na
+var linefill fillUp   = na
+var linefill fillDn   = na
+
+if barstate.islast
+    float bestR = math.max(r01,r02,r03,r04,r05,r06,r07,r08,r09,r10,
+                           r11,r12,r13,r14,r15,r16,r17,r18,r19)
+    dashBestR := bestR
+
+    int   detPer = na
+    float detSlp = na
+    float detInt = na
+    float detDev = na
+
+    switch bestR
+        r01 => detPer:=Periods.get(1),  detSlp:=s01, detInt:=n01, detDev:=d01
+        r02 => detPer:=Periods.get(2),  detSlp:=s02, detInt:=n02, detDev:=d02
+        r03 => detPer:=Periods.get(3),  detSlp:=s03, detInt:=n03, detDev:=d03
+        r04 => detPer:=Periods.get(4),  detSlp:=s04, detInt:=n04, detDev:=d04
+        r05 => detPer:=Periods.get(5),  detSlp:=s05, detInt:=n05, detDev:=d05
+        r06 => detPer:=Periods.get(6),  detSlp:=s06, detInt:=n06, detDev:=d06
+        r07 => detPer:=Periods.get(7),  detSlp:=s07, detInt:=n07, detDev:=d07
+        r08 => detPer:=Periods.get(8),  detSlp:=s08, detInt:=n08, detDev:=d08
+        r09 => detPer:=Periods.get(9),  detSlp:=s09, detInt:=n09, detDev:=d09
+        r10 => detPer:=Periods.get(10), detSlp:=s10, detInt:=n10, detDev:=d10
+        r11 => detPer:=Periods.get(11), detSlp:=s11, detInt:=n11, detDev:=d11
+        r12 => detPer:=Periods.get(12), detSlp:=s12, detInt:=n12, detDev:=d12
+        r13 => detPer:=Periods.get(13), detSlp:=s13, detInt:=n13, detDev:=d13
+        r14 => detPer:=Periods.get(14), detSlp:=s14, detInt:=n14, detDev:=d14
+        r15 => detPer:=Periods.get(15), detSlp:=s15, detInt:=n15, detDev:=d15
+        r16 => detPer:=Periods.get(16), detSlp:=s16, detInt:=n16, detDev:=d16
+        r17 => detPer:=Periods.get(17), detSlp:=s17, detInt:=n17, detDev:=d17
+        r18 => detPer:=Periods.get(18), detSlp:=s18, detInt:=n18, detDev:=d18
+        =>     detPer:=Periods.get(19), detSlp:=s19, detInt:=n19, detDev:=d19
+
+    dashPeriod := detPer
+    dashTrend  := detSlp > 0.0 ? "Bullish ↑" : "Bearish ↓"
+
+    int   startBar = bar_index - detPer + 1
+    float sP = math.exp(detInt + detSlp * (detPer - 1))
+    float eP = math.exp(detInt)
+    float uS = sP * math.exp(devMult * detDev)
+    float uE = eP * math.exp(devMult * detDev)
+    float lS = sP / math.exp(devMult * detDev)
+    float lE = eP / math.exp(devMult * detDev)
+
+    color cC = color.new(chanCol, lineAlpha)
+    color mC = color.new(midCol,  0)
+
+    if na(chanMid)
+        chanMid   := line.new(startBar, sP, bar_index, eP,
+                     color=mC, width=1, extend=extend.right, style=line.style_dashed)
+        chanUpper := line.new(startBar, uS, bar_index, uE,
+                     color=cC, width=1, extend=extend.right, style=line.style_solid)
+        chanLower := line.new(startBar, lS, bar_index, lE,
+                     color=cC, width=1, extend=extend.right, style=line.style_solid)
+        fillUp    := linefill.new(chanUpper, chanMid,   color=color.new(chanCol, fillAlpha))
+        fillDn    := linefill.new(chanMid,   chanLower, color=color.new(chanCol, fillAlpha))
+    else
+        line.set_xy1(chanMid,   startBar, sP),  line.set_xy2(chanMid,   bar_index, eP)
+        line.set_xy1(chanUpper, startBar, uS),  line.set_xy2(chanUpper, bar_index, uE)
+        line.set_xy1(chanLower, startBar, lS),  line.set_xy2(chanLower, bar_index, lE)
+        line.set_color(chanMid,   mC)
+        line.set_color(chanUpper, cC)
+        line.set_color(chanLower, cC)
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                  ADAPTIVE S/R ZONES ENGINE                      ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+type SRLevel
+    float  price
+    int    barStart
+    int    levelType   // 1 = resistance, -1 = support
+    bool   active
+    line   mainLine
+    box    zoneBox
+    label  breakLbl
+    label  priceLbl
+
+var array<SRLevel> actLvls = array.new<SRLevel>()
+var array<SRLevel> brkLvls = array.new<SRLevel>()
+var string         lastBrkDir = "—"
+var color          lastBrkCol = color.new(#484f58, 0)
+
+atr14   = ta.atr(14)
+atrSafe = na(atr14) or atr14 == 0.0 ? syminfo.mintick * 10 : atr14
+
+ph = ta.pivothigh(high, pivLen, pivLen)
+pl = ta.pivotlow (low,  pivLen, pivLen)
+
+isTooClose(float p, int t) =>
+    bool found = false
+    int sz = actLvls.size()
+    if sz > 0
+        for i = 0 to sz - 1
+            lvl = actLvls.get(i)
+            if lvl.levelType == t and lvl.active
+                if math.abs(lvl.price - p) < mergeATR * atrSafe
+                    found := true
+                    break
+    found
+
+addLevel(float p, int t, int b) =>
+    if not isTooClose(p, t)
+        int cnt = 0
+        if actLvls.size() > 0
+            for i = 0 to actLvls.size() - 1
+                lvl = actLvls.get(i)
+                if lvl.levelType == t and lvl.active
+                    cnt += 1
+        if cnt < maxLvl
+            color bc = t == 1 ? resCol : supCol
+            newL = line.new(b, p, b + 1, p,
+                   extend=extend.right, color=color.new(bc, 0), width=baseLW, style=line.style_solid)
+            newB = showZones ? box.new(b, p + zoneW * atrSafe * 0.5, b + 1, p - zoneW * atrSafe * 0.5,
+                   border_color=color.new(bc, 90), bgcolor=color.new(bc, 88), extend=extend.right) : na
+            newPL = showPL ? label.new(bar_index + 10, p, str.tostring(p, format.mintick),
+                   style=label.style_label_center, textcolor=bc,
+                   color=color.new(chart.bg_color, 0), size=size.small) : na
+            actLvls.push(SRLevel.new(p, b, t, true, newL, newB, na, newPL))
+
+pivStrong(float p, int t) =>
+    bool ok = true
+    if minStr > 0.0
+        if t == 1
+            float nh = math.max(high[pivLen - 1], high[pivLen + 1])
+            if (p - nh) < minStr * atrSafe
+                ok := false
+        else
+            float nl = math.min(low[pivLen - 1], low[pivLen + 1])
+            if (nl - p) < minStr * atrSafe
+                ok := false
+    ok
+
+// Remove levels that have exceeded their maximum age
+int pSz = actLvls.size()
+if pSz > 0
+    for i = pSz - 1 to 0
+        if i < actLvls.size()
+            lvl = actLvls.get(i)
+            if lvl.active and (bar_index - lvl.barStart) > maxAge
+                line.delete(lvl.mainLine)
+                if not na(lvl.zoneBox)  box.delete(lvl.zoneBox)
+                if not na(lvl.priceLbl) label.delete(lvl.priceLbl)
+                actLvls.remove(i)
+
+// Register new pivot highs/lows as S/R levels
+if not na(ph) and showRes
+    if pivStrong(ph, 1)
+        addLevel(ph, 1, bar_index - pivLen)
+
+if not na(pl) and showSup
+    if pivStrong(pl, -1)
+        addLevel(pl, -1, bar_index - pivLen)
+
+// Detect breakouts and convert active levels to broken levels
+int bSz = actLvls.size()
+if bSz > 0
+    for i = bSz - 1 to 0
+        if i >= actLvls.size()
+            continue
+        lvl = actLvls.get(i)
+        if not lvl.active
+            continue
+
+        float buf  = brkSens * atrSafe
+        bool  bull = lvl.levelType ==  1 and close > lvl.price + buf
+        bool  bear = lvl.levelType == -1 and close < lvl.price - buf
+
+        if bull or bear
+            lvl.active    := false
+            lastBrkDir    := bull ? "Bullish ↑" : "Bearish ↓"
+            lastBrkCol    := bull ? supCol : resCol
+
+            if not na(lvl.priceLbl)
+                label.delete(lvl.priceLbl)
+                lvl.priceLbl := na
+
+            line.set_color (lvl.mainLine, color.new(broCol, 0))
+            line.set_style (lvl.mainLine, line.style_dotted)
+            line.set_width (lvl.mainLine, 1)
+            line.set_extend(lvl.mainLine, extend.none)
+            line.set_x2   (lvl.mainLine, bar_index)
+
+            if not na(lvl.zoneBox)
+                box.set_bgcolor     (lvl.zoneBox, color.new(broCol, 93))
+                box.set_border_color(lvl.zoneBox, color.new(broCol, 100))
+                box.set_extend      (lvl.zoneBox, extend.none)
+                box.set_right       (lvl.zoneBox, bar_index)
+
+            if showBrkL
+                color lblC = bull ? supCol : resCol
+                lvl.breakLbl := label.new(bar_index, lvl.price, "◄ Break",
+                     style=label.style_label_left, textcolor=lblC,
+                     color=color.new(chart.bg_color, 100), size=size.small)
+
+            if showBrk
+                brkLvls.push(lvl)
+                if brkLvls.size() > maxBrk
+                    old = brkLvls.shift()
+                    if not na(old.mainLine)  line.delete(old.mainLine)
+                    if not na(old.zoneBox)   box.delete(old.zoneBox)
+                    if not na(old.breakLbl)  label.delete(old.breakLbl)
+            else
+                line.delete(lvl.mainLine)
+                if not na(lvl.zoneBox) box.delete(lvl.zoneBox)
+
+            actLvls.remove(i)
+
+// Extend active levels rightward each bar; apply longevity width scaling
+int eSz = actLvls.size()
+if eSz > 0
+    for i = 0 to eSz - 1
+        lvl = actLvls.get(i)
+        if lvl.active
+            if dynW
+                int age   = bar_index - lvl.barStart
+                int calcW = math.max(1, math.min(maxLW,
+                            int(math.round(1.0 + float(age) / float(maxAge) * float(maxLW - 1)))))
+                line.set_width(lvl.mainLine, calcW)
+            line.set_x2(lvl.mainLine, bar_index + 1)
+            if not na(lvl.zoneBox)
+                box.set_right(lvl.zoneBox, bar_index + 1)
+            if not na(lvl.priceLbl)
+                label.set_x(lvl.priceLbl, bar_index + 10)
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                     MACD BIAS ENGINE                            ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+tf      = macdTF == "" ? timeframe.period : macdTF
+macdRaw = ta.ema(close, fastLen) - ta.ema(close, slowLen)
+sigRaw  = ta.sma(macdRaw, sigLen)
+
+outMACD = request.security(syminfo.tickerid, tf, macdRaw, lookahead=barmerge.lookahead_off)
+outSig  = request.security(syminfo.tickerid, tf, sigRaw,  lookahead=barmerge.lookahead_off)
+outHist = request.security(syminfo.tickerid, tf, macdRaw - sigRaw, lookahead=barmerge.lookahead_off)
+
+macdBull     = outMACD >= outSig
+histRising   = outHist > outHist[1]
+macdMomentum = macdBull and histRising     ? "Strong Bull"  :
+               macdBull and not histRising ? "Weak Bull"    :
+               not macdBull and histRising ? "Weak Bear"    : "Strong Bear"
+
+// Subtle background tint from MACD state
+bgcolor(showBG ? (macdBull ? color.new(#22bac5, 97) : color.new(#ff6f43, 97)) : na, title="MACD Tint")
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                      CAGR CALCULATION                           ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+isCryptoDaily = syminfo.type == "crypto" and timeframe.isdaily
+isCryptoWeek  = syminfo.type == "crypto" and timeframe.isweekly
+tfMult        = isCryptoDaily ? 365 : isCryptoWeek ? 52 : timeframe.isdaily ? 252 : timeframe.isweekly ? 52 : 0
+validTF       = timeframe.isdaily or timeframe.isweekly
+
+cagrVal = float(na)
+if showCAGR and validTF and not na(dashPeriod) and bar_index >= dashPeriod
+    float sp = close[dashPeriod - 1]
+    if sp > 0
+        cagrVal := math.pow(close / sp, float(tfMult) / float(dashPeriod)) - 1.0
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                      PROFESSIONAL DASHBOARD                     ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+float nearSup = na
+float nearRes = na
+
+if actLvls.size() > 0
+    for i = 0 to actLvls.size() - 1
+        lvl = actLvls.get(i)
+        if not lvl.active
+            continue
+        if lvl.levelType == -1 and lvl.price < close
+            if na(nearSup) or lvl.price > nearSup
+                nearSup := lvl.price
+        if lvl.levelType == 1 and lvl.price > close
+            if na(nearRes) or lvl.price < nearRes
+                nearRes := lvl.price
+
+var table dash = na
+
+tPos = switch dashPos
+    "Top Right"   => position.top_right
+    "Top Left"    => position.top_left
+    "Bottom Left" => position.bottom_left
+    => position.bottom_right
+
+if showDash and barstate.isfirst
+    dash := table.new(tPos, 2, 10,
+         bgcolor      = color.new(#0d1117,  5),
+         border_color = color.new(#30363d, 40),
+         border_width = 1,
+         frame_color  = color.new(#30363d, 20),
+         frame_width  = 1)
+
+if showDash and barstate.islast and not na(dash)
+    color gray   = color.new(#8b949e, 0)
+    color white  = color.new(#f0f6fc, 0)
+    color dark   = color.new(#0d1117, 10)
+    color header = color.new(#161b22, 0)
+
+    // ── Row 0: Title ──────────────────────────────────────────────
+    table.cell(dash, 0, 0, "◈ Pro Market Intelligence",
+         text_color=white, text_size=size.normal, bgcolor=header, text_halign=text.align_center)
+    table.merge_cells(dash, 0, 0, 1, 0)
+
+    // ── Rows 1–3: Trend Channel Info ──────────────────────────────
+    color tCol = dashTrend == "Bullish ↑" ? supCol : dashTrend == "Bearish ↓" ? resCol : gray
+    table.cell(dash, 0, 1, "Trend Direction",  text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 1, dashTrend,          text_color=tCol,  text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    string rStr = na(dashBestR) ? "—" : rLabel(dashBestR)
+    color  rCol = na(dashBestR) ? gray : dashBestR >= 0.85 ? color.new(#22c55e, 0) : dashBestR >= 0.7 ? color.new(#eab308, 0) : resCol
+    table.cell(dash, 0, 2, "Trend Strength",   text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 2, rStr,               text_color=rCol,  text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    string perStr = na(dashPeriod) ? "—" : str.tostring(dashPeriod) + " bars"
+    table.cell(dash, 0, 3, "Auto Period",      text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 3, perStr,             text_color=white, text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    // ── Row 4: CAGR ───────────────────────────────────────────────
+    string cagrStr = not validTF ? "Daily/Weekly only" :
+                     na(cagrVal)  ? "—"                :
+                     str.tostring(cagrVal * 100.0, "#.##") + "%"
+    color  cagrC   = na(cagrVal) ? gray : cagrVal >= 0 ? color.new(#22c55e, 0) : resCol
+    table.cell(dash, 0, 4, "Annualized Return", text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 4, cagrStr,             text_color=cagrC, text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    // ── Rows 5–6: S/R Levels ─────────────────────────────────────
+    table.cell(dash, 0, 5, "Resistance",  text_color=gray, text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 5,
+         na(nearRes) ? "—" : str.tostring(nearRes, format.mintick),
+         text_color  = na(nearRes) ? gray : resCol,
+         text_size   = size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    table.cell(dash, 0, 6, "Support",     text_color=gray, text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 6,
+         na(nearSup) ? "—" : str.tostring(nearSup, format.mintick),
+         text_color  = na(nearSup) ? gray : supCol,
+         text_size   = size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    // ── Row 7: MACD Bias ─────────────────────────────────────────
+    color  macdC = macdBull ? supCol : resCol
+    table.cell(dash, 0, 7, "MACD Momentum", text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 7, macdMomentum,    text_color=macdC, text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    // ── Row 8: Last Breakout ─────────────────────────────────────
+    table.cell(dash, 0, 8, "Last Break",  text_color=gray,       text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 8, lastBrkDir,    text_color=lastBrkCol, text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
+
+    // ── Row 9: Active Levels Count ────────────────────────────────
+    table.cell(dash, 0, 9, "Active Levels", text_color=gray,  text_size=size.normal, bgcolor=dark, text_halign=text.align_left)
+    table.cell(dash, 1, 9, str.tostring(actLvls.size()), text_color=white, text_size=size.normal, bgcolor=dark, text_halign=text.align_right)
