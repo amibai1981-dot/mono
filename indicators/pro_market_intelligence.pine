@@ -82,23 +82,35 @@ var array<int> Periods = longTerm
 calcDev(float src, int len) =>
     if barstate.islast
         int   p1  = len - 1
-        float sX  = 0.0, float sXX = 0.0, float sYX = 0.0, float sY = 0.0
+        float sX  = 0.0
+        float sXX = 0.0
+        float sYX = 0.0
+        float sY  = 0.0
         for i = 1 to len
             float ls = math.log(src[i - 1])
-            sX  += i;  sXX += i * i;  sYX += i * ls;  sY += ls
+            sX  += i
+            sXX += i * i
+            sYX += i * ls
+            sY  += ls
         float slope  = nz((len * sYX - sX * sY) / (len * sXX - sX * sX))
         float avg    = sY / len
         float intcp  = avg - slope * sX / len + slope
-        float sDev   = 0.0, float sDxx = 0.0, float sDyy = 0.0, float sDyx = 0.0
+        float sDev   = 0.0
+        float sDxx   = 0.0
+        float sDyy   = 0.0
+        float sDyx   = 0.0
         float regres = intcp + slope * p1 * 0.5
         float sSlp   = intcp
         for i = 0 to p1
             float ls  = math.log(src[i])
             float dxt = ls - avg
             float dyt = sSlp - regres
-            ls       -= sSlp
-            sSlp     += slope
-            sDxx     += dxt * dxt;  sDyy += dyt * dyt;  sDyx += dxt * dyt;  sDev += ls * ls
+            ls        -= sSlp
+            sSlp      += slope
+            sDxx      += dxt * dxt
+            sDyy      += dyt * dyt
+            sDyx      += dxt * dyt
+            sDev      += ls  * ls
         float uStd = math.sqrt(sDev / p1)
         float pR   = nz(sDyx / math.sqrt(sDxx * sDyy))
         [uStd, pR, slope, intcp]
