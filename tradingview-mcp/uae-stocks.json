@@ -1,0 +1,28 @@
+{
+  "market": "UAE",
+  "exchanges": ["DFM", "ADX"],
+  "session": {
+    "timezone": "Asia/Dubai",
+    "open": "10:00",
+    "close": "14:00",
+    "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+    "note": "السوق الإماراتي يعمل الأحد–الخميس فقط"
+  },
+  "watchlist": [
+    { "symbol": "DFM:EMAAR",      "name": "إعمار العقارية",        "sector": "عقارات" },
+    { "symbol": "ADX:ADNOCDIST",  "name": "أدنوك للتوزيع",         "sector": "طاقة" },
+    { "symbol": "DFM:DIB",        "name": "بنك دبي الإسلامي",      "sector": "بنوك" },
+    { "symbol": "ADX:FAB",        "name": "بنك أبوظبي الأول",      "sector": "بنوك" },
+    { "symbol": "ADX:ALDAR",      "name": "الدار العقارية",         "sector": "عقارات" },
+    { "symbol": "DFM:ENBD",       "name": "بنك الإمارات دبي الوطني","sector": "بنوك" },
+    { "symbol": "ADX:TAQA",       "name": "طاقة",                   "sector": "طاقة" },
+    { "symbol": "DFM:DEWA",       "name": "هيئة كهرباء ومياه دبي", "sector": "مرافق" }
+  ],
+  "scalp_settings": {
+    "timeframes": ["5", "15"],
+    "indicators": ["EMA9", "EMA21", "RSI", "VWAP", "Volume"],
+    "min_volume_aed": 500000,
+    "avoid_first_minutes": 10,
+    "avoid_last_minutes": 15
+  }
+}

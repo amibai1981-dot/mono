@@ -1,0 +1,17 @@
+{
+  "name": "tradingview-mcp",
+  "version": "1.0.0",
+  "description": "TradingView MCP connector for Codex CLI",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.17.0",
+    "dotenv": "^16.4.5"
+  }
+}
