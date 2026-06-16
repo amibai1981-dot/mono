@@ -1,53 +1,50 @@
 @echo off
-chcp 65001 >nul
 echo.
-echo ════════════════════════════════════════
+echo ============================================
 echo   TradingView MCP - Windows Setup
-echo ════════════════════════════════════════
+echo ============================================
 echo.
 
-:: التحقق من Node.js
 node --version >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] Node.js غير مثبت
-  echo حمله من: https://nodejs.org
+  echo [ERROR] Node.js not found. Download from: https://nodejs.org
   pause
   exit /b 1
 )
-echo [OK] Node.js موجود:
+echo [OK] Node.js found:
 node --version
 
-:: التحقق من npm
 npm --version >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] npm غير موجود
+  echo [ERROR] npm not found
   pause
   exit /b 1
 )
-echo [OK] npm موجود
+echo [OK] npm found:
+npm --version
 
 echo.
-echo [1/3] تثبيت الحزم...
+echo [1/3] Installing packages...
 call npm install
 if errorlevel 1 (
-  echo [ERROR] فشل npm install
+  echo [ERROR] npm install failed
   pause
   exit /b 1
 )
-echo [OK] الحزم مثبتة
+echo [OK] Packages installed
 
 echo.
-echo [2/3] تثبيت متصفح Chromium...
+echo [2/3] Installing Chromium browser...
 call npx playwright install chromium
 if errorlevel 1 (
-  echo [ERROR] فشل تثبيت Chromium
+  echo [ERROR] Chromium install failed
   pause
   exit /b 1
 )
-echo [OK] Chromium مثبت
+echo [OK] Chromium installed
 
 echo.
-echo [3/3] إعداد Codex MCP...
+echo [3/3] Configuring Codex MCP...
 
 set CONFIG_DIR=%USERPROFILE%\.codex
 if not exist "%CONFIG_DIR%" mkdir "%CONFIG_DIR%"
@@ -61,26 +58,25 @@ echo name = "tradingview-mcp"
 echo command = "node"
 echo args = ["%SCRIPT_DIR:\=\\%\\server.js"]
 echo enabled = true
-echo description = "TradingView live reader - UAE stocks and crypto"
 echo.
 echo [settings]
 echo auto_approve_tools = ["get_chart_data", "get_quote", "morning_brief", "analyze_scalp", "scan_uae_market"]
 ) > "%CONFIG_DIR%\config.toml"
 
-echo [OK] config.toml تم في: %CONFIG_DIR%\config.toml
+echo [OK] Codex config saved to: %CONFIG_DIR%\config.toml
 
 echo.
-echo [اختبار] فحص الاتصال بـ TradingView...
-node -e "import('playwright').then(async ({chromium})=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('https://www.tradingview.com',{waitUntil:'domcontentloaded',timeout:15000});console.log('[OK] TradingView متصل:',await p.title());await b.close();}).catch(e=>console.log('[ERROR]',e.message));"
+echo [Test] Checking TradingView connection...
+node -e "import('playwright').then(async ({chromium})=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('https://www.tradingview.com',{waitUntil:'domcontentloaded',timeout:15000});console.log('[OK] TradingView connected:',await p.title());await b.close();}).catch(e=>console.log('[ERROR]',e.message));"
 
 echo.
-echo ════════════════════════════════════════
-echo   الإعداد اكتمل!
-echo ════════════════════════════════════════
+echo ============================================
+echo   Setup Complete!
+echo ============================================
 echo.
-echo الخطوة التالية:
-echo   1. افتح Command Prompt جديد
-echo   2. اكتب: codex
-echo   3. قل: صباح الخير - امسح الاسهم الاماراتية
+echo Next steps:
+echo   1. Open a new Command Prompt
+echo   2. Type: codex
+echo   3. Say: morning brief for UAE stocks and crypto
 echo.
 pause
