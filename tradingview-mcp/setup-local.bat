@@ -1,9 +1,9 @@
 @echo off
 echo === Step 1: npm install ===
-npm install
+call npm install
 echo.
 echo === Step 2: Install Chromium ===
-npx playwright install chromium
+call npx playwright install chromium
 echo.
 echo === Step 3: Create Codex config ===
 if not exist "%USERPROFILE%\.codex" mkdir "%USERPROFILE%\.codex"
