@@ -24,6 +24,8 @@ BYBIT_API_KEY=OOtP0fbulyroD2LAHI
 BYBIT_API_PRIVATE_KEY_PATH=$(pwd)/private.pem
 BYBIT_ENV=mainnet
 REFRESH_SECONDS=10
+WEBHOOK_SECRET=change_me_to_a_strong_secret
+WEBHOOK_PORT=8080
 EOF
     echo "✓ تم إنشاء ملف .env"
 fi
@@ -33,3 +35,4 @@ echo "=== جاهز للتشغيل ==="
 echo "مراقبة السوق:  python3 monitor.py monitor"
 echo "عرض الرصيد:    python3 monitor.py balance"
 echo "الاثنان معاً:  python3 monitor.py all"
+echo "Webhook:       python3 webhook.py"
